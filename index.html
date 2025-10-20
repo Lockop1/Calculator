@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Calculator</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+
+<body>
+    <div id="app"></div>
+
+
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+        function App(){
+            const [lastPressed, setLastPressed] = React.useState("");
+            const [display, setDisplay] = React.useState("0");
+            const [equation, setEquation] = React.useState("");
+
+
+            const handleClick = (event) => {
+                const kind = event.target.dataset.type;
+                const text = event.target.textContent;
+
+                let nextDisplay = display;
+                let nextEquation = equation;
+                let nextLast = lastPressed;
+
+                
+                if (event.target.id === "clear") {
+                nextDisplay = "0";
+                nextEquation = "";
+                nextLast = "";
+                }
+        
+                else if (kind === "digit") {
+                    if(nextLast === "equals"){
+                        nextDisplay = text;
+                        nextEquation = text;
+                    }
+                    else if (nextLast === "op") {
+                        nextDisplay = text;
+                        nextEquation = nextEquation + text;
+                    } else if (nextDisplay === "0") {
+                        nextDisplay = text;
+                        nextEquation = nextEquation === "" ? text : nextEquation + text;
+                    } else {
+                        nextDisplay = nextDisplay + text;
+                        nextEquation = nextEquation + text;
+                    }
+                    nextLast = "digit";
+                }
+            
+                else if (kind === "op") {
+                    const op = text;
+                    let i = nextEquation.length - 1;
+
+                    while (i >= 0 && "+-*/".includes(nextEquation[i])) i--;
+                    const base = nextEquation.slice(0, i + 1);
+                    const opsRun = nextEquation.slice(i + 1);
+
+                    if (op !== "-") {
+                      nextEquation = base + op;
+                      nextDisplay = op;
+                      nextLast = "op";
+                    } else {
+                      if (opsRun.length === 0) {
+                        nextEquation = base + "-";
+                      } else {
+                        const lastNonMinus = [...opsRun].reverse().find((ch) => ch !== "-"); // may be undefined
+                        if (lastNonMinus === "*" || lastNonMinus === "/") {
+                          nextEquation = base + lastNonMinus + "-";
+                        } else {
+                          nextEquation = base + "-";
+                        }
+                      }
+                      nextDisplay = "-";
+                      nextLast = "op";
+                    }
+                }
+            
+                else if(kind === "equals"){
+                    let expr = equation;
+                    const lastChar = equation.slice(-1);
+                    const isLastOpChar = lastChar === '+' || lastChar === '-' || lastChar === '*' || lastChar === '/';
+                    const firstChar = equation.slice(0, 1);
+                    const isFirstOpChar = firstChar === '+' || firstChar === '*' || firstChar === '/';
+
+                    if(isFirstOpChar) expr = expr.slice(1);
+                    if(isLastOpChar) expr = expr.slice(0, -1);
+
+                    const ans = Number(eval(expr).toFixed(6));
+                    nextDisplay = ans.toString();
+                    nextEquation = ans.toString();
+                    nextLast = "equals";
+                }
+                
+                else if (kind === "decimal") {
+                    if (nextLast === "equals") {
+                        nextDisplay = "0.";
+                        nextEquation = "0.";
+                        nextLast = "digit";
+                    } else if (nextLast === "op") {
+                        nextDisplay = "0.";
+                        nextEquation = nextEquation + "0.";
+                        nextLast = "digit";
+                    } else {
+                        if (nextDisplay.includes(".")) {
+                            //Do nothing
+                        } else if (nextDisplay === "0") {
+                            if (nextEquation.endsWith("0")) {
+                            nextEquation = nextEquation.slice(0, -1) + "0.";
+                            } else {
+                            nextEquation = nextEquation === "" ? "0." : nextEquation + "0.";
+                        }
+                        nextDisplay = "0.";
+                        } else {
+                            nextDisplay = nextDisplay + ".";
+                            nextEquation = nextEquation + ".";
+                        }
+                    nextLast = "digit";
+                    }
+                }
+
+                console.log(nextEquation);
+                setDisplay(nextDisplay);
+                setEquation(nextEquation);
+                setLastPressed(nextLast);
+            };
+
+
+
+            
+            return(
+                <div id="calculator">
+                    <div id="screen">
+                        <div className="formula" aria-label="formula">{equation || "\u00A0"}</div>
+                        <div id="display" className="value">{display}</div>
+                    </div>
+                   
+                    <div id="buttons" className="pad">
+                        <button onClick={handleClick} className="btn clear" id="clear">AC</button>
+                        <button onClick={handleClick} data-type="op" className="btn op" id="multiply">*</button>
+                        <button onClick={handleClick} data-type="op" className="btn op" id="divide">/</button>
+
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="seven">7</button>
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="eight">8</button>
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="nine">9</button>
+                        <button onClick={handleClick} data-type="op" className="btn op" id="subtract">-</button>
+
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="four">4</button>
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="five">5</button>
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="six">6</button>
+                        <button onClick={handleClick} data-type="op" className="btn op" id="add">+</button>
+
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="one">1</button>
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="two">2</button>
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="three">3</button>
+                        <button onClick={handleClick} data-type="equals" className="btn equals" id="equals">=</button>
+                        
+                        <button onClick={handleClick} data-type="digit" className="btn num" id="zero">0</button>
+                        <button onClick={handleClick} data-type="decimal" className="btn dec" id="decimal">.</button>
+                    </div>
+                    <div id="by-me">By: Anthony Newsome</div>
+                </div>
+            );
+        }
+
+
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+
+
+
+    <!-- FCC test menu -->
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+</body>
+
+</html>
